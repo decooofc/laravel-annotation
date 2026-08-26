@@ -186,7 +186,6 @@ As colunas marcadas como `$hidden` são campos em que são escondidos quando a m
 
 - `Migration`: Cria o banco de dados;
 - `Model`: Representa o banco de dados;
-<<<<<<< HEAD
 
 ## Sistema de login - Parte 1 
 
@@ -332,5 +331,3 @@ Após criar, se formos ao navegador, podemos perceber um erro `Base table or vie
 ![Recuperate sessions table](./imagens-anotação/sessions-table.png)
 
 E para subir essa migration para o ar, e criar essa tabela no banco de dados, é só fazer: `php artisan migrate:fresh --seed`, passando a flag `--seed` para também enviar os dados da `seeder`.
-=======
->>>>>>> refs/remotes/origin/Main
