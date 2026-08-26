@@ -10,7 +10,7 @@ Versionamento do banco de dados, como se fosse um github, só que para o DB
 #### Versionamento
 O laravel sempre versiona, sempre permite com que a gente consiga olhar o que está acontecendo com o banco de dados.
 
-Por padrão o `laravel` cria por padrão um versionamento, dentro da pasta `@/database/migrations`, seguido a estrutura:
+Por padrão o `laravel` cria por padrão um versionamento, dentro da pasta `@/database/migrations`, segunido a estrutura:
 
 1. Data
 2. O que aconteceu
@@ -25,7 +25,7 @@ Com os nomes dos arquivos acima, já conseguimos entender um pouco sobre o que a
 
 Com o `migration`, conseguimos "voltar atrás" de algum versionamento, como o github, por exemplo:
 
-> Criamos uma tabela, que já foi para o ar, existem usuários utilizando-a, mas aconteceu um erro, conseguimos "voltar atrás", revertendo essa ação.
+- Criamos uma tabela, que já foi para o ar, existem usuários utilizando-a, mas aconteceu um erro, conseguimos "voltar atrás", revertendo essa ação.
 
 **Como funciona**
 
