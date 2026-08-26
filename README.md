@@ -186,3 +186,148 @@ As colunas marcadas como `$hidden` são campos em que são escondidos quando a m
 
 - `Migration`: Cria o banco de dados;
 - `Model`: Representa o banco de dados;
+
+## Sistema de login - Parte 1 
+
+Optamos por fazer o sistema de login antes que o sistema de cadastro, mas para ter um sistema de login, precisamos ter um usuário cadastrado no nosso banco de dados, por isso vamos utilizar uma técnica do laravel que consiste em popular o banco de dados com dados iniciais ou dados de teste, chamado `Seeders`
+
+### Criando seeder
+
+```bash
+php artisan make:seeder UserSeeder
+```
+
+Aqui estamos criando uma `seeder` chamada `UserSeeder`, que fica disponível em: `@/database/seeders/UserSeeder.php`.
+
+#### Populando tabela Users
+
+Ao criar essa `seeder` temos a função pública `run()` que será executada quando enviarmos os dados para popular o banco de dados, na maioria dos casos, uma seeder vai inserir os dados em alguma tabela, no nosso caso, só temos a tabela `User` criada, ou seja, a model `User`, por isso vamos passar a função `::create([])` para a model `User` e dentro do array, passamos os dados das colunas que temos: 
+
+![UserSeeder Data](./imagens-anotação/userseeder-data.png)
+
+Após definir a função `create([])` e passar os dados das colunas, podemos subir esses dados para o banco de dados utilizando:
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+Passamos a flag `--seed` porque o Artisan não roda seeders automaticamente depois de migrar, então sem essa flag você teria que rodar dois comandos separados:
+
+- `php artisan migrate`
+- `php artisan db:seed`
+
+#### Arrumando factory
+
+Ao criar um projeto com laravel, ele tenta criar uma **Fábrica de dados falsos** para enviar ao banco de dados, só que no nosso caso, a gente deletou algumas colunas do banco de dados, então quando rodamos o `php artisan migrate:fresh --seed`, ele vai retornar um erro, dizendo que não encontrou a coluna `email_verified_at`, já que deletamos ela na última seção.
+
+![Error on fresh](./imagens-anotação/seeder-error.png)
+
+Desse modo, vamos entrar dentro do arquivo da `Factory` e arrumar esse problema, para que a factory envie os dados nas colunas existentes:
+
+```php 
+// UserFactory.php
+
+class UserFactory extends Factory
+{
+    protected static ?string $password;
+
+    public function definition(): array
+    {
+        return [
+            'name' => fake()->name(),
+            'email' => fake()->unique()->safeEmail(),
+            'password' => static::$password ??= Hash::make('password'),
+        ];
+    }
+}
+```
+<small>*É assim como deve ficar o `UserFactory`*</small>
+
+Após arrumar a factory, podemos rodar o `migrate:fresh` que os dados serão enviados ao banco de dados:
+
+![Habit tracker database on users table](./imagens-anotação/database-with-factory-data.png)
+<small>*Dados enviados para a tabela users*</small>
+
+Agora, podemos observar que os dados enviados para a tabela, foi diferente dos dados que definimos na `seeder`, isso acontece porque, criamos a `UserSeeder`, mas não estamos chamando a `seeder` em nenhum momento, vamos chamar o `seeder` dentro de `DatabaseSeeder.php` que é onde vamos chamar as `seeders` que criarmos:
+
+```php
+// DatabaseSeeder.php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+
+class DatabaseSeeder extends Seeder
+{
+    public function run(): void
+    {
+        $this->call([
+            UserSeeder::class,
+        ]);
+    }
+}
+```
+
+Então, dentro da função `run()`, estamos enviando `$this->call([])`, aonde, dentro desse array é onde vamos enviar a `seeder`, enviamos um array, porque caso tenhamos mais de uma `seeder`, podemos enviar ela junto ao `call([])`.
+
+Agora podemos dar `php artisan migrate:fresh --seed`, que os dados da `UserSeeder` serão enviados para o banco de dados:
+
+![Migration fresh --seed](./imagens-anotação/migration-fresh--seed.png)
+![Table users after fresh](./imagens-anotação/database-with-user-seeder.png)
+
+Podemos observar na tabela `password`, o dado está `hashed`, isso acontece por que na Model, é enviado uma função `casts()`, dizendo para o laravel que os dados da tabela `password` devem ser `hashed`.
+
+```php
+// User.php
+
+protected function casts(): array
+{
+  return [
+    'password' => 'hashed',
+  ],
+}
+```
+
+### Criando rota de login
+
+Agora que criamos o nosso primeiro usuário, precisamos criar uma rota de login:
+
+```php
+// web.php
+
+Route::get('/login', [LoginController]::class, 'index');
+// Rota -> '/login'
+// Controller -> 'LoginController'
+// Função dentro do Controller -> 'index'
+```
+
+Aqui criamos um novo controller `LoginController` que vai estar dentro da pasta `@/App/Http/Controllers/Auth/LoginController`;
+
+> Criamos a pasta `Auth`, para deixar todos os controllers relacionados com o login nessa pasta, podemos criar esse controller com o seguinte comando:
+> ```bash
+> php artisan make:controller Auth/LoginController
+> ```
+
+### Criando view login
+
+No nosso método `index` dentro de `LoginController` vamos definir apenas a nossa view:
+
+```php
+// LoginController
+
+public function index()
+{
+  return view('login');
+}
+```
+
+Mas, precisamos criar a nossa view, então dentro da pasta `@resources/views` vamos duplicar o arquivo `home.blade.php` e renomear para `login.blade.php`.
+
+### Recuperando tabela sessions
+
+Após criar, se formos ao navegador, podemos perceber um erro `Base table or view not found: Table 'habit_tracker.sessions' doesn't exists`, por que esse erro está acontecendo, na última aula, deletamos a tabela `sessions` do banco de dado
+
+- Para recuperar essa tabela, podemos ir no último commit do github e copiar o código em que foi criado a tabela `sessions` na função `up()` na nossa migration, e também fazer o drop dessa tabela na função `down()`:
+![Recuperate sessions table](./imagens-anotação/sessions-table.png)
+
+E para subir essa migration para o ar, e criar essa tabela no banco de dados, é só fazer: `php artisan migrate:fresh --seed`, passando a flag `--seed` para também enviar os dados da `seeder`.
