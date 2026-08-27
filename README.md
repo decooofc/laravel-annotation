@@ -3,11 +3,13 @@
 ## Migration
 
 ### O que é
+
 Versionamento do banco de dados, como se fosse um github, só que para o DB
 
 ### Vantagens
 
 #### Versionamento
+
 O laravel sempre versiona, sempre permite com que a gente consiga olhar o que está acontecendo com o banco de dados.
 
 Por padrão o `laravel` cria por padrão um versionamento, dentro da pasta `@/database/migrations`, segunido a estrutura:
@@ -82,6 +84,7 @@ E caso terminamos de configurar nossa migration, e queremos subir ela ao banco d
 ```bash
 php artisan migrate
 ```
+
 ![Upload migration to DB](./imagens-anotação/up-migration.png)
 <small>*Migration subindo para o DB*</small>
 
@@ -106,7 +109,7 @@ E agora, como o status está `pending`, podemos **deletar** o arquivo da migrati
 
 #### Flags no rollback
 
-- `--step=`: Indicamos quantas migrations queremos dar rollback a partir da última, por exemplo: <br/> 
+- `--step=`: Indicamos quantas migrations queremos dar rollback a partir da última, por exemplo: <br/>
   `php artisan migrate:rollback --step=2` -> rollback nas duas últimas migrations.
 
 - `--batch=`: Indicamos o lote em qual queremos dar rollback, por exemplo: <br/>
@@ -148,6 +151,7 @@ Assim alteramos a estrutura sem apagar os dados existentes.
 ## Models
 
 ### O que são
+
 - Representação das tabelas do banco de dados em forma de classe PHP;
 - As models ficam guardadas na pasta `@/app/models/...`
 
@@ -172,7 +176,7 @@ User::where('email', 'andre@uranus.com.br')->first()
 - `('andre@uranus.com.br')`: Condição dentro de where para a coluna "email";
 - `->first()`: Retornar o primeiro resultado encontrado;
 
-Ou seja: na model user (`User`) onde (`where`) o email 'andre@uranus.com.br' esteja dentro da coluna 'email' (`('email', 'andre@uranus.com.br')`) retorne o primeiro resultado (`->first()`);
+Ou seja: na model user (`User`) onde (`where`) o email '<andre@uranus.com.br>' esteja dentro da coluna 'email' (`('email', 'andre@uranus.com.br')`) retorne o primeiro resultado (`->first()`);
 
 ### Fillable
 
@@ -187,7 +191,7 @@ As colunas marcadas como `$hidden` são campos em que são escondidos quando a m
 - `Migration`: Cria o banco de dados;
 - `Model`: Representa o banco de dados;
 
-## Sistema de login - Parte 1 
+## Sistema de login - Parte 1
 
 Optamos por fazer o sistema de login antes que o sistema de cadastro, mas para ter um sistema de login, precisamos ter um usuário cadastrado no nosso banco de dados, por isso vamos utilizar uma técnica do laravel que consiste em popular o banco de dados com dados iniciais ou dados de teste, chamado `Seeders`
 
@@ -201,7 +205,7 @@ Aqui estamos criando uma `seeder` chamada `UserSeeder`, que fica disponível em:
 
 #### Populando tabela Users
 
-Ao criar essa `seeder` temos a função pública `run()` que será executada quando enviarmos os dados para popular o banco de dados, na maioria dos casos, uma seeder vai inserir os dados em alguma tabela, no nosso caso, só temos a tabela `User` criada, ou seja, a model `User`, por isso vamos passar a função `::create([])` para a model `User` e dentro do array, passamos os dados das colunas que temos: 
+Ao criar essa `seeder` temos a função pública `run()` que será executada quando enviarmos os dados para popular o banco de dados, na maioria dos casos, uma seeder vai inserir os dados em alguma tabela, no nosso caso, só temos a tabela `User` criada, ou seja, a model `User`, por isso vamos passar a função `::create([])` para a model `User` e dentro do array, passamos os dados das colunas que temos:
 
 ![UserSeeder Data](./imagens-anotação/userseeder-data.png)
 
@@ -224,7 +228,7 @@ Ao criar um projeto com laravel, ele tenta criar uma **Fábrica de dados falsos*
 
 Desse modo, vamos entrar dentro do arquivo da `Factory` e arrumar esse problema, para que a factory envie os dados nas colunas existentes:
 
-```php 
+```php
 // UserFactory.php
 
 class UserFactory extends Factory
@@ -241,6 +245,7 @@ class UserFactory extends Factory
     }
 }
 ```
+
 <small>*É assim como deve ficar o `UserFactory`*</small>
 
 Após arrumar a factory, podemos rodar o `migrate:fresh` que os dados serão enviados ao banco de dados:
@@ -304,6 +309,7 @@ Route::get('/login', [LoginController]::class, 'index');
 Aqui criamos um novo controller `LoginController` que vai estar dentro da pasta `@/App/Http/Controllers/Auth/LoginController`;
 
 > Criamos a pasta `Auth`, para deixar todos os controllers relacionados com o login nessa pasta, podemos criar esse controller com o seguinte comando:
+>
 > ```bash
 > php artisan make:controller Auth/LoginController
 > ```
@@ -331,3 +337,113 @@ Após criar, se formos ao navegador, podemos perceber um erro `Base table or vie
 ![Recuperate sessions table](./imagens-anotação/sessions-table.png)
 
 E para subir essa migration para o ar, e criar essa tabela no banco de dados, é só fazer: `php artisan migrate:fresh --seed`, passando a flag `--seed` para também enviar os dados da `seeder`.
+
+## Sistema de login - Parte 2
+
+### Criando página de login
+
+```html
+// login.blade.php
+
+<x-layout>
+  <main>
+    <h1>
+      Faça login.
+    </h1>
+
+    <section class="mt-4">
+      <form action="/login" method="post">
+        <input 
+          type="email" 
+          name="email" 
+          placeholder="your@email.com" 
+          class="bg-white p-2 border-2"
+        >
+        
+        <input 
+          type="password" 
+          name="password" 
+          placeholder="********" 
+          class="bg-white p-2 border-2"
+        >
+
+        <button type="submit" class="bg-white p-2 border-2">
+          Enviar
+        </button>
+      </form>
+    </section>
+  </main>
+</x-layout>
+```
+
+- `form action="/login" method="post"` -> Indicando que os dados desse post vão para a rota `/login` e o método será `POST`, então temos que criar um `Route::post()` dentro de `routes/web.php`:
+
+### Criando rota POST
+
+```php
+// web.php
+
+Route::post('/login', [LoginController::class], 'authenticate')
+```
+
+- Aqui estamos criando um método `POST` na rota `/login`, passando o `LoginController` na função `authenticate`;
+- A função `authenticate` será quem irá receber os dados da request;
+
+### Validação de formulário - CSRF
+
+No momento em que definimos um formulário em HTML, devemos incluir o `campo de token CSRF` para que o middleware do `CSRF` possa validar a requisção, isso é feito a partir da inclusão da diretiva `@csrf` dentro de um arquivo `blade.php`;
+
+> **`CSRF`**: é um tipo de ataque em que um site malicioso engana o navegador para que ele envie uma requisição indesejada a outra aplicação.
+>
+> **`Porque é perigoso`**: O ataque explora a confiança que o servidor deposita no navegador do usuário autenticado. Qualquer ação que dependa dos cookies de sessão pode ser forjada: trocar senha, alterar e-mail, fazer compras etc.
+
+```html
+// login.blade.php
+
+<form>
+@crsf
+...
+</form>
+```
+
+### Criando função Authenticate dentro de LoginController
+
+```php
+public function authenticate(Request $request)
+{
+
+}
+```
+
+- `$credentials = $request->validate([])`: Aqui é onde vamos validar os campos e salvar em `$credentials`;
+- `if(Auth::atempt($credentials))`: Verificando se os dados passados pela `$credentials` são verdadeiras ou falsas;
+- `$request->session()->regenerate()`: Se as credenciais forem reais, estamos gerando uma nova sessão para o usuário, sessão de usuário logado;
+- `return redirect()->intended('/')`: Depois de gerar a nova sessão do usuário, redirecionamos ele para a rota `'/'`;
+- `else: return back()->withErrors(['email' => 'Credenciais inválidas])`: Caso as `$credentials` estejam erradas, vamos redirecionar o usuário de volta com o `back()` e mostrar um erro no campo `'email'` com o `withErrors([])`;
+
+### Passando o erro na página de login
+
+Ao direcionar o usuário de volta com um erro retornado pelo método `withErrors([...])`, vamos criar uma seção para mostrar esse erro para o usuário.
+
+```html
+<!-- login.blade.php -->
+
+<div>
+  @error('email') 
+    <p>
+      {{ $message }} 
+    </p>
+  @enderror
+</div>
+```
+
+### Passando mensagem de bem vindo para usuários logados
+
+```html
+<!-- home.blade.php -->
+@auth
+  <p>
+    Bem vindo {{ auth()->user()->name }}!
+  </p>
+@endauth
+```
