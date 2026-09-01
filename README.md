@@ -439,7 +439,7 @@ Ao direcionar o usuário de volta com um erro retornado pelo método `withErrors
 
 ### Passando mensagem de bem vindo para usuários logados
 
-```html
+```php
 <!-- home.blade.php -->
 @auth
   <p>
@@ -447,3 +447,78 @@ Ao direcionar o usuário de volta com um erro retornado pelo método `withErrors
   </p>
 @endauth
 ```
+
+## Criando sistema de logout + Middleware
+
+Aqui vamos criar o sistema de logout e entender mais o que são os Middlewares.
+
+### Criando rota de logout
+
+```php
+// web.php
+
+Route::post('/logout', [LoginController::class], 'logout');
+```
+
+### Criando função de logout
+
+```php
+// LoginController
+
+public function logout(Request $request): RedirectResponse
+{
+  // Deslogando o usuário:
+  Auth::logout();
+
+  // Limpando os dados da sessão e re-gerando outro ID:
+  $request->session()->invalidate();
+
+  // Regenerando o valor do token CSRF da sessão:
+  $request->session()->regenerateToken();
+
+  // Redirecionando o usuário para a página inicial:
+  return redirect()->intended(route('site.index'));
+}
+```
+
+### Passando middleware nas rotas
+
+Os middlewares são basicamentes como porteiros, que vão fazer uma verificação antes de deixar o usuário fazer uma requisição ou acessar uma rota.
+
+> ![Middleware](./imagens-anotação/middleware.png)
+
+Podemos passar o middleware em dois jeitos:
+
+1) Passando em apenas uma rota:
+```php
+// web.php
+
+Route::post('/logout', [LoginController::class], 'logout')->middleware('auth');
+```
+
+2) Agrupando as rotas e passando o middleware:
+```php
+// web.php
+
+Route::middleware('auth')->group(function () {
+  Route::get('/dashboard', [SiteController::class], 'dashboard');
+  Route::post('/logout', [LoginController::class], 'logout');
+});
+```
+
+### Nomeando rotas
+
+Imagine que por algum motivo precisamos trocar a URL da rota, para evitar toda a refatoração do código de todos os redirecionamentos, chamadas etc. para a nova rota, podemos nomear ela, evitando esse re-trabalho:
+
+```php
+// web.php
+
+Route::get('/', [SiteController::class], 'index')->name('site.index');
+```
+
+Aqui nomeamos a rota como `site.index`, e vamos chamar ela com a função:
+```php
+route('site.index')
+```
+
+Lembrando que em caso de arquivos com html com php inserido, precisamos passar os métodos envolto de `{{ @method }}`;
