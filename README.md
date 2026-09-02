@@ -522,3 +522,119 @@ route('site.index')
 ```
 
 Lembrando que em caso de arquivos com html com php inserido, precisamos passar os métodos envolto de `{{ @method }}`;
+
+## Criando validação de formulário com o Form Request Validation
+
+No nosso projeto atualmente, estamos validando a requisição dentro do próprio controller utilizando o método: `validate([])`, mas podemos melhorar isso criando uma própria `Request` do laravel, com o comando:
+
+```bash
+php artisan make:request
+```
+
+### Vantagens
+
+- **Separação de responsabilidades:** O controller deve orquestrar a lógica de negócio(autenticar, redirecionar etc.), não ficar poluído com regras de validação;
+- **Reutilização:** Se precisar validar o login em mais de um lugar (por exemplo, um endpoint de API além do form web), a classe `LoginRequest` pode ser reaproveitada.
+- **Mensagens de erros centralizadas:** As mensagens customizadas ficam num único lugar `LoginRequest::messages()`, junto das regras que elas descrevem, em vez de espalhadas em cada controller que precisar validar algo parecido.
+
+### Criando validação dentro de LoginRequest
+
+Agora precisamos definir as regras de validação, e também a autorização do usuário, ou seja, o que o usuário precisa para fazer essa requisição, nesse caso, para fazer login não precisa de nada, então podemos definir como `true`:
+
+```php
+// LoginRequest.php
+
+class LoginRequest extends FormRequest
+{
+  // Autorização
+  public function authorize(): bool
+  {
+    return true;
+  }
+
+  // Regras da validação
+  public function rules(): array
+  {
+    return [
+      'email' => 'email|required',
+      'password' => 'required|min:6|max:60',
+    ];
+  }
+
+  // Mensagens de erro customizadas
+  public function messages(): array
+  {
+    return [
+      'email.required' => 'O campo e-mail deve ser obrigatório.',
+      'email.email' => 'O campo e-mail deve conter um endereço válido',
+      'password.required' => 'O campo senha é obrigatório',
+      'password.min' => 'O campo senha deve ter no mínimo 6 caracteres',
+      'password.max' => 'O campo senha deve ter no máximo 60 caracteres',
+    ];
+  }
+}
+```
+
+### Pasando as validações para o controller
+
+Agora, não precisamos mais usar o método `validate()`:
+
+```php
+public function authenticate(LoginRequest $request)
+{
+  // Salvando os dados que vieram do LoginRequest
+  $credentials = $request->only("email", "password");
+}
+```
+
+### Melhorando interface de login
+
+```html
+<x-layout>
+  <main>
+    <section class="bg-white max-w-150 mx-auto p-10 border-2 mt-4">
+      <h1 class="font-bold text-3xl">
+        Faça login.
+      </h1>
+
+      <p>
+        Insira seus dados para acessar
+      </p>
+
+      <form action=<{{ route('auth.login') }} method="post">
+        @csrf
+        <!-- EMAIL -->
+        <div class="flex flex-col gap-2 mb-4">
+          <label for="email">Email</label>
+          <input type="email" name="email" placeholder="your@email.com"
+            class="bg-white p-2 border-2 @error('email') border-red-500 @enderror">
+
+          @error('email')
+            <p class="text-red-500 text-sm">
+              {{ $message }}
+            </p>
+          @enderror
+        </div>
+
+        <!-- PASSWORD  -->
+        <div class="flex flex-col gap-2 mb-4">
+          <label for="password">Password</label>
+          <input type="password" name="password" placeholder="********"
+            class="bg-white p-2 border-2 @error('password') border-red-500 @enderror">
+
+          @error('password')
+            <p class="text-red-500 text-sm">
+              {{ $message }}
+            </p>
+          @enderror
+        </div>
+
+        <!-- SUBMIT -->
+        <button type="submit" class="bg-white p-2 border-2">
+          Enviar
+        </button>
+      </form>
+    </section>
+  </main>
+</x-layout>
+```
