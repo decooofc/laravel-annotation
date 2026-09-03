@@ -638,3 +638,200 @@ public function authenticate(LoginRequest $request)
   </main>
 </x-layout>
 ```
+
+## Criando sistema de registro com validação
+
+Aqui vamos criar a parte de registrar o usuário, e enviar suas informações para o banco de dados
+
+### Criando a rota GET, view e controller de registro
+
+- **Rota:**
+```php
+// web.php
+
+Route::get('/register', [RegisterController::class], 'index')->name('site.register');
+```
+
+- **Controller:**
+
+```php
+// RegisterController.php
+
+public function index()
+{
+  return view("register");
+}
+```
+
+- **View:**
+
+```html
+<!-- register.blade.php -->
+
+<x-layout>
+  <main>
+    <section class="bg-white max-w-150 mx-auto p-10 border-2 mt-4">
+      <h1 class="font-bold text-3xl">
+        Registre-se
+      </h1>
+
+      <p>
+        Insira seus dados para se registrar
+      </p>
+
+      <form action={{ route('auth.register') }} method="post" class="flex flex-col pb-2">
+        @csrf
+        {{-- Nome --}}
+        <div class="flex flex-col gap-2 mb-4">
+          <label for="name">Nome</label>
+          <input type="text" name="name" placeholder="Your Name"
+            class="bg-white p-2 border-2 @error('name') border-red-500 @enderror">
+
+          @error('name')
+            <p class="text-red-500 text-sm">
+              {{ $message }}
+            </p>
+          @enderror
+        </div>
+
+        {{-- EMAIL --}}
+        <div class="flex flex-col gap-2 mb-4">
+          <label for="email">Email</label>
+          <input type="email" name="email" placeholder="your@email.com"
+            class="bg-white p-2 border-2 @error('email') border-red-500 @enderror">
+
+          @error('email')
+            <p class="text-red-500 text-sm">
+              {{ $message }}
+            </p>
+          @enderror
+        </div>
+
+        {{-- PASSWORD --}}
+        <div class="flex flex-col gap-2 mb-4">
+          <label for="password">Password</label>
+          <input type="password" name="password" placeholder="********"
+            class="bg-white p-2 border-2 @error('password') border-red-500 @enderror">
+
+          @error('password')
+            <p class="text-red-500 text-sm">
+              {{ $message }}
+            </p>
+          @enderror
+        </div>
+
+        {{-- PASSWORD CONFIRMATION --}}
+        <div class="flex flex-col gap-2 mb-4">
+          <label for="password_confirmation">Confirme sua senha</label>
+          <input type="password" name="password_confirmation" placeholder="********"
+            class="bg-white p-2 border-2 @error('password') border-red-500 @enderror">
+
+          @error('password')
+            <p class="text-red-500 text-sm">
+              {{ $message }}
+            </p>
+          @enderror
+        </div>
+
+        {{-- SUBMIT --}}
+        <button type="submit" class="bg-white p-2 border-2 mt-3">
+          Cadastrar
+        </button>
+      </form>
+
+      <div>
+        <p class="text-center mt-3">
+          Já tem uma conta?
+          <a href="{{ route('site.login') }}" class="underline hover:opacity-50 transition">Faça login</a>
+        </p>
+      </div>
+    </section>
+  </main>
+</x-layout>
+```
+
+### Criando rota POST, request e continuando o controller de register
+
+- **Rota:**
+
+```php
+// web.php
+
+Route::post('/register', [RegisterController::class, 'register'])->name('auth.register');
+```
+
+- **Request:**
+
+```php
+// RegisterRequest.php
+
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Foundation\Http\FormRequest;
+
+class RegisterRequest extends FormRequest
+{
+  public function authorize(): bool
+  {
+    // Passando true, porque todo usuário pode se cadastrar
+    return true;
+  }
+  public function rules(): array
+  {
+    return [
+      'name' => 'required|max:255|string',
+      'email' => 'required|email|max:255|unique:users',
+      'password' => 'required|min:6|max:60|confirmed',
+    ];
+  }
+
+  public function messages(): array
+  {
+    return [
+      'name.required' => 'O campo nome é obrigatório.',
+      'name.max' => 'O nome não pode conter mais ou igual a 255 caracteres.',
+      'name.string' => 'O nome deve ser um texto válido.',
+
+      'email.required' => 'O campo e-mail é obrigatório.',
+      'email.email' => 'O campo e-mail deve conter um e-mail válido.',
+      'email.unique' => 'Esse e-mail já está em uso.',
+
+      'password.required' => 'O campo senha é obrigatório.',
+      'password.min' => 'A senha deve ter no mínimo 6 caracteres.',
+      'password.max' => 'A senha deve ter no máximo 60 caracteres.',
+      'password.confirmed' => 'As senhas não coincidem.'
+    ];
+  }
+}
+```
+
+Nesse request temos uma diferença quando comparamos ao `LoginRequest.php`, agora temos uma regra no campo `password` que seria a regra: `confirmed`
+
+- O laravel automaticamente procura por um segundo campo na requisição para fazer a confirmação.
+- Esse segundo campo deve obrigatóriamente ter o nome do campo original (`password`) seguido pelo sufixo `_confirmation`: `password_confirmation`.
+
+- **Controller:**
+  
+No controller aonde vamos criar o usuário no banco de dados e pegar os dados do `RegisterRequest`:
+
+```php
+public function register(RegisterRequest $request)
+{
+  // Criando o usuário no banco de dados com o método create([]), em cima da nossa model 'User'.
+  $user = User::create([
+    // Aqui dentro é onde passamos os dados que pegamos da 'RegisterRequest'
+    "name" => $request->input('name'),
+    "email" => $request->input('email'),
+    "password" => $request->input('password'),
+  ]);
+
+  // Logando o usuário após criar no banco de dados
+  Auth::login($user);
+
+  // Redirecionando o usuário para o dashboard
+  return redirect()->route('site.dashboard');
+}
+```
