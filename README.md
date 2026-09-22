@@ -835,3 +835,44 @@ public function register(RegisterRequest $request)
   return redirect()->route('site.dashboard');
 }
 ```
+
+## Migrations/Models | Como criar tabelas e relacionamento no banco
+
+Nesse seção vamos aprender a como criar novas tabelas no banco de dados utilizando models e migrations, lembrando que model é a representação de uma tabela do banco de dados no laravel e as migrations vão ser o versionamento dessa tabela no banco de dados.
+
+### Habit - Criando model e migration ao mesmo tempo
+
+![Habit - Model/Migration](./imagens-anotação/habit-model-migration.png)
+
+Com esse comando, observe que criamos tanto a Model para a tabela ``habits`` quanto a sua migration inicial.
+
+### Habit - Modificando a migration
+
+Agora vamos modificar a migration, para quando enviar ao banco de dados, criar a tabela com os dados corretos.
+
+![Habit Migration](./imagens-anotação/habit-migration.png)
+
+Aqui temos uma chave estrangeira, que seria o ID do usuário, o ``laravel`` nos permite fazer isso com o método ``foreignIdFor()``, aonde dentro dos parentêses indicamos qual é a model que vem esse Id, (``User::class``), e também podemos passar o nome do campo (``user_id``), mas no caso, não precisamos passar o nome do campo porque o laravel entende que ao não passar nada, queremos pegar a key primaria daquela tabela.
+
+### Habit - Indicando ao laravel quais campos são $fillable dentro da model
+
+Esses campos marcados com ``$fillable`` define quais campos devem ser preenchidos por uma atribuição em massa, por exemplo: (``Users::create($request)->all()``);
+
+![Habit Model](./imagens-anotação/habit-model.png)
+
+### HabitLog
+
+E agora vamos fazer tudo isso denovo para a tabela Habit Logs:
+
+- Criando Model/Migration juntos
+![Criando model/migration HabitLog](./imagens-anotação/habitlog-creating.png)
+
+- Modificando migrations
+
+![Modificando migration da tabela HabitLog](./imagens-anotação/habitlog-migration.png)
+
+> OBS: Após modificar a migration com os campos, precisamos enviar ao banco de dados para fazer a criação da tabela no banco de dados (``php artisan migrate``);
+
+- Modificando model
+
+![Modificando model da tabela HabitLog](./imagens-anotação/habitlog-model.png)
