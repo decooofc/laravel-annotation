@@ -877,3 +877,41 @@ E agora vamos fazer tudo isso denovo para a tabela Habit Logs:
 
 ![Modificando model da tabela HabitLog](./imagens-anotação/habitlog-model.png)
 
+## (#11) Relacionamentos Eloquent: hasMany e belongsTo
+
+Os relacionamentos precisam ser uma `public function`, porque o Eloquent os chama de fora da classe.
+
+### Relacionamento hasMany
+
+Para fazer um relacionamento *Um para Muitos*, utilizamos o método ``hasMany`` em uma Model para indicar que existe uma relação eloquente *Um para Muitos*.
+
+> Exemplo:
+> ![hasMany](./imagens-anotação/hasMany.png)
+
+- `HasMany` -> Classe que esse método retorna. Colocá-la como tipo de retorno deixa o código tipado, que é padrão do projeto.
+- `$this->hasMany(Habit::class)` -> diz ao Laravel que a tabela `Habits` tem uma  coluna `user_id` que aponta para `users.id`. O nome da coluna é deduzido do nome do model: `User` vira `user_id`.
+
+### Relacionamento belongsTo
+
+No relacionamento *Um para Muitos* precisamos indicar qual tabela pertence a outra tabela, por isso fazemos o inverso do método `hasMany`.
+
+> Exemplo:
+> ![belongsTo](./imagens-anotação/belongsTo.png)
+
+- `BelongsTo` -> Classe que esse método retorna.
+- `$this->belongsTo(User::class)` -> diz ao Laravel que a coluna `user_id` dentro da tabela `Habits` se relaciona (`belongsto (pertence à)`) coluna `id` dentro da tabela `User`.
+
+### Fazendo os relacionamentos da tabela HabitLogs
+
+- Um **usuário||hábito** pode ter vários registros `(hasMany)`;
+- Um registro pode ter somente um **usuário||hábito** `(belongsTo)`;
+
+### Resumo
+
+Para fazer um relacionamento eloquente *Um para Muitos*, indicamos qual tabela pode ter muitos de outra tabela pelo método `hasMany`, e no inverso, indicamos qual a única tabela que completa o relacionamento:
+
+> `User` pode ter vários `Habits`: `$this`(User)`->hasMany(Habit::class)`;
+
+E na outra tabela fazemos o inverso:
+
+> `Habit` só tem um único `User`: `$this`(Habit)`->belongsTo(User::class)`;
