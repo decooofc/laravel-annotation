@@ -191,7 +191,7 @@ As colunas marcadas como `$hidden` são campos em que são escondidos quando a m
 - `Migration`: Cria o banco de dados;
 - `Model`: Representa o banco de dados;
 
-## Sistema de login - Parte 1
+## (#06) Sistema de login - Parte 1
 
 Optamos por fazer o sistema de login antes que o sistema de cadastro, mas para ter um sistema de login, precisamos ter um usuário cadastrado no nosso banco de dados, por isso vamos utilizar uma técnica do laravel que consiste em popular o banco de dados com dados iniciais ou dados de teste, chamado `Seeders`
 
@@ -338,7 +338,7 @@ Após criar, se formos ao navegador, podemos perceber um erro `Base table or vie
 
 E para subir essa migration para o ar, e criar essa tabela no banco de dados, é só fazer: `php artisan migrate:fresh --seed`, passando a flag `--seed` para também enviar os dados da `seeder`.
 
-## Sistema de login - Parte 2
+## (#06.2) Sistema de login - Parte 2
 
 ### Criando página de login
 
@@ -448,7 +448,7 @@ Ao direcionar o usuário de volta com um erro retornado pelo método `withErrors
 @endauth
 ```
 
-## Criando sistema de logout + Middleware
+## (#07) Criando sistema de logout + Middleware
 
 Aqui vamos criar o sistema de logout e entender mais o que são os Middlewares.
 
@@ -523,7 +523,7 @@ route('site.index')
 
 Lembrando que em caso de arquivos com html com php inserido, precisamos passar os métodos envolto de `{{ @method }}`;
 
-## Criando validação de formulário com o Form Request Validation
+## (#08) Criando validação de formulário com o Form Request Validation
 
 No nosso projeto atualmente, estamos validando a requisição dentro do próprio controller utilizando o método: `validate([])`, mas podemos melhorar isso criando uma própria `Request` do laravel, com o comando:
 
@@ -639,7 +639,7 @@ public function authenticate(LoginRequest $request)
 </x-layout>
 ```
 
-## Criando sistema de registro com validação
+## (#09) Criando sistema de registro com validação
 
 Aqui vamos criar a parte de registrar o usuário, e enviar suas informações para o banco de dados
 
@@ -836,7 +836,7 @@ public function register(RegisterRequest $request)
 }
 ```
 
-## Migrations/Models | Como criar tabelas e relacionamento no banco
+## (#10) Migrations/Models | Como criar tabelas e relacionamento no banco
 
 Nesse seção vamos aprender a como criar novas tabelas no banco de dados utilizando models e migrations, lembrando que model é a representação de uma tabela do banco de dados no laravel e as migrations vão ser o versionamento dessa tabela no banco de dados.
 
@@ -876,3 +876,4 @@ E agora vamos fazer tudo isso denovo para a tabela Habit Logs:
 - Modificando model
 
 ![Modificando model da tabela HabitLog](./imagens-anotação/habitlog-model.png)
+
